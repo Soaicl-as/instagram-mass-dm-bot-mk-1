@@ -1,0 +1,9 @@
+flask==2.3.3
+flask-socketio==5.3.6
+eventlet==0.33.3
+selenium==4.11.2
+undetected-chromedriver==3.5.4
+gunicorn==21.2.0
+python-dotenv==1.0.0
+psutil==5.9.5
+cachetools==5.3.1
