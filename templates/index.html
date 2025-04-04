@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Instagram Mass DM Bot</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.6.1/socket.io.min.js"></script>
+    <style>
+        /* Keep existing styles */
+        .error-flash { animation: flash-red 1s; }
+        @keyframes flash-red {
+            0% { background: #ffebee; }
+            50% { background: #ffcdd2; }
+            100% { background: #ffebee; }
+        }
+    </style>
+</head>
+<body>
+    <h1>Instagram Mass DM Bot</h1>
+    <div id="connection-status" class="disconnected">Connecting...</div>
+    <form id="dm-form">
+        <!-- Keep existing form elements -->
+    </form>
+    <div id="log"></div>
+
+    <script>
+        const socket = io({
+            reconnectionDelay: 1000,
+            reconnectionAttempts: 5,
+            timeout: 15000,
+            transports: ['websocket']
+        });
+
+        let activeProcess = false;
+        
+        socket.on('connect', () => {
+            document.getElementById('connection-status').className = 'connected';
+        });
+
+        socket.on('disconnect', () => {
+            document.getElementById('connection-status').className = 'disconnected';
+            if(activeProcess) showAlert('Connection lost!');
+        });
+
+        socket.on('update', throttle(msg => {
+            addLogEntry(msg, msg.includes('Failed') ? 'error' : 'info');
+        }, 150));
+
+        socket.on('error', msg => {
+            addLogEntry(`ERROR: ${msg}`, 'error');
+            activeProcess = false;
+        });
+
+        document.getElementById('dm-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            activeProcess = true;
+            
+            try {
+                const response = await fetch('/', {
+                    method: 'POST',
+                    body: new FormData(e.target)
+                });
+                if(!response.ok) throw new Error('Server error');
+            } catch (error) {
+                activeProcess = false;
+                addLogEntry('Submission failed', 'error');
+            }
+        });
+
+        function addLogEntry(text, type = 'info') {
+            const entry = document.createElement('p');
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${text}`;
+            entry.className = type;
+            document.getElementById('log').appendChild(entry);
+            
+            // Manage log size
+            if(document.getElementById('log').children.length > 50) {
+                document.getElementById('log').firstChild.remove();
+            }
+            document.getElementById('log').scrollTop = 1e9;
+        }
+
+        function throttle(func, limit) {
+            let lastRun = 0;
+            return (...args) => {
+                if(Date.now() - lastRun >= limit) {
+                    func(...args);
+                    lastRun = Date.now();
+                }
+            };
+        }
+    </script>
+</body>
+</html>
