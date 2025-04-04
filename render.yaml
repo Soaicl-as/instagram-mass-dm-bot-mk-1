@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: instagram-bot
+    runtime: python
+    buildCommand: "./build.sh"
+    startCommand: "gunicorn --worker-class eventlet -w 2 app:app"
+    envVars:
+      - key: INSTAGRAM_USERNAME
+        value: your_username
+      - key: INSTAGRAM_PASSWORD
+        value: your_password
+      - key: PYTHONUNBUFFERED
+        value: 1
+      - key: WEB_CONCURRENCY
+        value: 2
